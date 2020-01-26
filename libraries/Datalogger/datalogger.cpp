@@ -19,7 +19,7 @@ int openFile(File file, char* name, byte mode)
 {
   if(mode != FILE_READ || mode != FILE_WRITE)
   {
-    return FAILURE;
+    return -1;
   }
 
   if(closeFile(file) != 0)
