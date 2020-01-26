@@ -21,7 +21,7 @@ int invalidArgument(String argument);
 int initModules();
 int splitCommand();
 int recordData(long duration);
-int printFile(String filename)
+int printFile(String filename);
 int listFiles();
 
 // Command Line Variables
@@ -87,7 +87,7 @@ void loop()
           broadcast("OK.\n");
           if(recordData(duration))
           {
-            broadcast("ERROR: Problem occured while recording data.\n")
+            broadcast("ERROR: Problem occured while recording data.\n");
           }
         }
         else
@@ -109,7 +109,7 @@ void loop()
           broadcast("OK.\n");
           if(printFile(arg))
           {
-            broadcast("ERROR: Problem occured while reading files.\n")
+            broadcast("ERROR: Problem occured while reading files.\n");
           }
         }
         else
@@ -123,7 +123,7 @@ void loop()
       broadcast("OK\n");
       if(listFiles())
       {
-        broadcast("ERROR: Problem occured while listing files.\n")
+        broadcast("ERROR: Problem occured while listing files.\n");
       }
     }
     else if(cmd == "RESET")
@@ -213,7 +213,7 @@ int initModules()
 
   if(initINA260())
   {
-    initError("INA260")
+    initError("INA260");
     toggleLED();
   }
 
@@ -249,6 +249,7 @@ int recordData(long duration)
   // Datalogger Variables
   File log;
   String filename;
+  char charName[16];
 
   // Find Next Available Filename
   for(int n = 0; n < 1000; n++)
@@ -256,14 +257,18 @@ int recordData(long duration)
     filename = "/log";
     filename.concat(n);
     filename.concat(".csv");
-    if(!SD.exists(filename)
+
+    // Convert String to Char Array
+    filename.toCharArray(charName, 16);
+    
+    if(!SD.exists(charName));
     {
       break;
     }
   }
 
   // Open File
-  if(openFile(log, filename, FILE_WRITE))
+  if(openFile(log, charName, FILE_WRITE))
   {
     // Return Error
     broadcast("ERROR: Unable to open file '");
@@ -273,12 +278,12 @@ int recordData(long duration)
   }
 
   // Log Start Time
-  Datetime start = rtc.now();
+  DateTime start = rtc.now();
   log.println(start.timestamp(DateTime::TIMESTAMP_FULL));
 
   // Loop Time variables
-  Datetime last = start;
-  Datetime now = start;
+  DateTime last = start;
+  DateTime now = start;
 
   // User Input Variable
   String input;
@@ -305,7 +310,7 @@ int recordData(long duration)
     {
       if(ble.available())
       {
-        input = Serial.readline();
+        input = ble.readline();
       }
     }
     if(input == "STOP")
@@ -363,8 +368,8 @@ int recordData(long duration)
   }
 
   // Log End Time
-  Datetime end = rtc.now();
-  log.println(end.timestamp(DateTime::TIMESTAMP_FULL))
+  DateTime end = rtc.now();
+  log.println(end.timestamp(DateTime::TIMESTAMP_FULL));
 
   // Close File
   closeFile(log);
@@ -379,9 +384,13 @@ int printFile(String filename)
   char character;
   String line = "";
 
+  // Convert Filename to Char Array
+  char charName[16];
+  filename.toCharArray(charName, 16);
+
   // Open File
   File logfile;
-  if(openFile(logfile, filename, READ_ONLY))
+  if(openFile(logfile, charName, FILE_READ))
   {
     // Return Error
     broadcast("ERROR: Unable to open file '");
