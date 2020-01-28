@@ -519,6 +519,8 @@ int recordData(long duration)
         log.print(voltage);
         log.print(',');
         log.print(power);
+        log.print(',');
+        log.print(getBateryVoltage());
         log.print('\n');
       }
 
@@ -532,6 +534,8 @@ int recordData(long duration)
         Serial.print(voltage);
         Serial.print(',');
         Serial.print(power);
+        Serial.print(',');
+        Serial.print(getBateryVoltage());
         Serial.print('\n');
       }
 
@@ -547,6 +551,8 @@ int recordData(long duration)
           ble.print(voltage);
           ble.print(',');
           ble.print(power);
+          ble.print(',');
+          ble.print(getBateryVoltage());
           ble.print('\n');
         }
       }
