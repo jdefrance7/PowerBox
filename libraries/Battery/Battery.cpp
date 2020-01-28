@@ -1,4 +1,4 @@
-#include "battery.h"
+#include "Battery.h"
 
 float getBatteryVoltage()
 {
