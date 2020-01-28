@@ -16,44 +16,45 @@
 #define LOG_INTERVAL 5
 
 // Function Definitions
+int initModules();
 int toggleLED();
 int broadcast(String msg);
-int initError(String msg);
-int invalidCommand(String command);
-int invalidArgument(String argument);
-int initModules();
-int splitCommand();
+int commandHandler();
+int splitCommand(String command, String argument);
+int echoCommand(String command, String argument);
 int recordData(long duration);
 int printFile(String filename);
 int listFiles();
 
-// Command Line Variables
-String cmd;
-String arg;
-
 void setup()
 {
-  // Init Library Objects
+  // Init Project Objects
   initModules();
 
-  // Setup Command Line
-  broadcast("> ");
+  // Opening Message
+  broadcast("Initialization Complete!\n");
 }
 
 void loop()
 {
+  // Continuously Read and Process Commands
+  commandHandler();
+}
+
+int commandHandler()
+{
   // Monitor Battery
   if(getBatteryVoltage() < VBATLOW);
   {
-    broadcast("ERROR: Battery Low");
+    broadcast("ERROR: Battery Low.\n");
     toggleLED();
   }
 
-  // Clear Command & Arg
-  cmd = "NONE";
-  arg = "NONE";
+  // Command Line Variables
+  String cmd = "NONE";
+  String arg = "NONE";
 
-  // Read New Command
+  // Read In New Command From Stream(s)
   if(Serial)
   {
     if(Serial.available())
@@ -65,88 +66,133 @@ void loop()
   {
     if(ble.available())
     {
-      cmd = ble.readline();
+      ble.readline();
+      if(strcmp(ble.buffer, "OK") != 0)
+      {
+        cmd = ble.buffer;
+      }
     }
   }
 
-  // Check For Input
+  // Check If Command Read
   if(cmd != "NONE")
   {
     // Split Cmd & Arg
-    splitCommand();
+    splitCommand(cmd, arg);
 
-    // Command Cases
-    if(cmd == "RUN")
+    /*
+      Supported Commands:
+        RUN [DURATION] - logs data for duration in minutes
+        READ [FILENAME] - prints file to stream(s) available
+        LIST - prints list of files on SD to stream(s) available
+        RESET - reinitializes all modules of the project
+        HELP - prints list of supported commands to stream(s) available
+    */
+
+    // RUN [DURATION]
+    if(cmd == "RUN" && arg != "NONE")
     {
-      if(arg == "NONE")
+      // Get Duration
+      long duration = arg.toInt();
+
+      // Check Valid Number
+      if(duration > 0)
       {
-        invalidCommand(cmd);
+        // Echo Command
+        broadcast("OK: ");
+        echoCommand(cmd, arg);
+        broadcast("NOTE: Enter 'STOP' to quit logging data early.\n");
+
+        // Check Return Value
+        if(recordData(duration))
+        {
+          broadcast("ERROR: Problem occured while logging data.\n");
+        }
       }
       else
       {
-        long duration = arg.toInt();
-        if(duration > 0)
-        {
-          broadcast("OK.\n");
-          if(recordData(duration))
-          {
-            broadcast("ERROR: Problem occured while recording data.\n");
-          }
-        }
-        else
-        {
-          invalidArgument(arg);
-        }
+        // Invalid Duration
+        broadcast("ERROR: ");
+        echoCommand(cmd, arg);
       }
     }
-    else if(cmd == "READ")
+
+    // READ [FILENAME]
+    else if(cmd == "READ" && arg != "NONE")
     {
-      if(arg == "NONE")
+      // Check Valid Filename
+      if(SD.exists(arg))
       {
-        invalidCommand(cmd);
+        // Echo Command
+        broadcast("OK: ");
+        echoCommand(cmd, arg);
+
+        // Check Return Value
+        if(printFile(arg))
+        {
+          broadcast("ERROR: Problem occured while reading files.\n");
+        }
       }
       else
       {
-        if(SD.exists(arg))
-        {
-          broadcast("OK.\n");
-          if(printFile(arg))
-          {
-            broadcast("ERROR: Problem occured while reading files.\n");
-          }
-        }
-        else
-        {
-          invalidArgument(arg);
-        }
+        // Invalid Filename
+        broadcast("ERROR: ");
+        echoCommand(cmd ,arg);
       }
     }
-    else if(cmd == "LIST")
+
+    // LIST
+    else if(cmd == "LIST" && arg == "NONE")
     {
-      broadcast("OK\n");
+      // Echo Command
+      broadcast("OK: ");
+      echoCommand(cmd, arg);
+
+      // Check Return Value
       if(listFiles())
       {
         broadcast("ERROR: Problem occured while listing files.\n");
       }
     }
-    else if(cmd == "RESET")
+
+    // RESET
+    else if(cmd == "RESET" && arg == "NONE")
     {
-      broadcast("OK.\n");
+      // Echo Command
+      broadcast("OK: ");
+      echoCommand(cmd, arg);
+
       initModules();
     }
+
+    // HELP
+    else if(cmd == "HELP" && arg == "NONE")
+    {
+      // Echo Command
+      broadcast("OK: ");
+      echoCommand(cmd, arg);
+
+      // List Supported Commands
+      broadcast("Commands:\n");
+      broadcast("  RUN [duration]\n");
+      broadcast("  READ [filename]\n");
+      broadcast("  LIST\n");
+      broadcast("  RESET\n");
+      broadcast("  HELP\n");
+    }
+
+    // COMMAND NOT RECOGNIZED
     else
     {
+      // Echo Command
       broadcast("ERROR: ");
-      broadcast(cmd);
-      if(arg != "NONE")
-      {
-        broadcast(" ");
-        broadcast(arg);
-      }
-      broadcast("\n");
+      echoCommand(cmd, arg);
+      broadcast("NOTE: Enter 'HELP' for list of supported commands.\n");
     }
-    broadcast("> ");
   }
+
+  // Return Success
+  return 0;
 }
 
 int toggleLED()
@@ -172,25 +218,18 @@ int broadcast(String msg)
   }
 }
 
-int initError(String msg)
+int echoCommand(String command, String argument)
 {
-  broadcast("ERROR: Unable to init '");
-  broadcast(msg);
-  broadcast("'\n");
-}
-
-int invalidCommand(String command)
-{
-  broadcast("ERROR: Invalid command '");
   broadcast(command);
-  broadcast("'\n");
-}
+  if(argument != "NONE")
+  {
+    broadcast(" ");
+    broadcast(argument);
+  }
+  broadcast("\n");
 
-int invalidArgument(String argument)
-{
-  broadcast("ERROR: Invalid argument '");
-  broadcast(argument);
-  broadcast("'\n");
+  // Return Success
+  return 0;
 }
 
 int initModules()
@@ -204,43 +243,46 @@ int initModules()
 
   if(initBluetooth())
   {
-    initError("Bluetooth");
+    broadcast("ERROR: Unable to init Bluetooth.\n");
     toggleLED();
   }
 
   if(initDatalogger())
   {
-    initError("Datalogger");
+    broadcast("ERROR: Unable to init Datalogger.\n");
     toggleLED();
   }
 
   if(initINA260())
   {
-    initError("INA260");
+    broadcast("ERROR: Unable to init INA260.\n");
     toggleLED();
   }
 
   if(initRTC())
   {
-    initError("RTC");
+    broadcast("ERROR: Unable to init RTC.\n");
     toggleLED();
   }
+
+  // Return Success
+  return 0;
 }
 
-int splitCommand()
+int splitCommand(String command, String argument)
 {
   // Find if Space Exists
-  int index = cmd.indexOf(' ');
+  int index = command.indexOf(' ');
 
   // Split Around Space
   if(index != -1)
   {
-    arg = cmd.substring(index+1);
-    cmd = cmd.substring(0, index-1);
+    argument = command.substring(index+1);
+    command = command.substring(0, index-1);
   }
   else
   {
-    arg = "NONE";
+    argument = "NONE";
   }
 
   // Return Success
@@ -297,6 +339,7 @@ int recordData(long duration)
     // Monitor Battery
     if(getBatteryVoltage() < VBATLOW);
     {
+      log.println("ERROR: Battery Low");
       broadcast("ERROR: Battery Low");
       break;
     }
