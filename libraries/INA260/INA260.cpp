@@ -1,4 +1,4 @@
-#include "ina260.h"
+#include "INA260.h"
 
 // Adafruit_INA260 Object
 Adafruit_INA260 ina260 = Adafruit_INA260();
