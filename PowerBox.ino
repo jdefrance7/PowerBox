@@ -9,6 +9,9 @@
 #include "RTC.h"
 #include "Serial.h"
 
+// Debug Flag
+#define DEBUG
+
 // Built-In LED Pin for Adafruit M0
 #define LED_PIN 13
 
@@ -20,6 +23,7 @@ int initModules();
 int toggleLED();
 int broadcast(String msg);
 int commandHandler();
+String getCommand();
 int splitCommand(String command, String argument);
 int echoCommand(String command, String argument);
 long getTime();
@@ -59,36 +63,21 @@ int commandHandler()
     toggleLED();
   }
 
-  // Command Line Variables
-  String cmd = "NONE";
-  String arg = "NONE";
+  // Poll Stream(s) for Command
+  String cmd = getCommand();
 
-  // Read In New Command From Stream(s)
-  if(SERIAL_ENABLED)
-  {
-    if(Serial.available())
-    {
-      cmd = Serial.readString();
-    }
-  }
-  else if(BLUETOOTH_ENABLED)
-  {
-    if(ble.isConnected())
-    {
-      if(ble.available())
-      {
-        ble.readline();
-        if(strcmp(ble.buffer, "OK") != 0)
-        {
-          cmd = ble.buffer;
-        }
-      }
-    }
-  }
+  #ifdef DEBUG
+  broadcast("CMD: ");
+  broadcast(cmd);
+  broadcast("\n");
+  #endif
 
-  // Check If Command Read
+  // Check if Command was Read
   if(cmd != "NONE")
   {
+    // String for Arg
+    String arg = "NONE";
+
     // Split Cmd & Arg
     splitCommand(cmd, arg);
 
@@ -102,11 +91,17 @@ int commandHandler()
         HELP - prints list of supported commands to stream(s) available
     */
 
-    // RUN [DURATION]
+    // COMMAND: RUN [DURATION]
     if(cmd == "RUN" && arg != "NONE")
     {
       // Get Duration
       long duration = arg.toInt();
+
+      #ifdef DEBUG
+      broadcast("DURATION: ");
+      broadcast(String(duration));
+      broadcast("\n");
+      #endif
 
       // Check Valid Number
       if(duration > 0)
@@ -130,9 +125,16 @@ int commandHandler()
       }
     }
 
-    // READ [FILENAME]
+    // COMMAND: READ [FILENAME]
     else if(cmd == "READ" && arg != "NONE")
     {
+
+      #ifdef DEBUG
+      broadcast("FILENAME: ");
+      broadcast(arg);
+      broadcast("\n");
+      #endif
+
       // Check Valid Filename
       if(SD.exists(arg))
       {
@@ -179,23 +181,7 @@ int commandHandler()
       initModules();
     }
 
-    // HELP
-    else if(cmd == "HELP" && arg == "NONE")
-    {
-      // Echo Command
-      broadcast("OK: ");
-      echoCommand(cmd, arg);
-
-      // List Supported Commands
-      broadcast("Commands:\n");
-      broadcast("  RUN [duration]\n");
-      broadcast("  READ [filename]\n");
-      broadcast("  LIST\n");
-      broadcast("  RESET\n");
-      broadcast("  STATUS\n");
-      broadcast("  HELP\n");
-    }
-
+    // COMMAND: STATUS
     else if(cmd == "STATUS" && arg == "NONE")
     {
       // Echo Command
@@ -214,6 +200,23 @@ int commandHandler()
       broadcast("\nINA260: ");
       broadcast(String(INA260_ENABLED));
       broadcast("\n");
+    }
+
+    // COMMAND: HELP
+    else if(cmd == "HELP" && arg == "NONE")
+    {
+      // Echo Command
+      broadcast("OK: ");
+      echoCommand(cmd, arg);
+
+      // List Supported Commands
+      broadcast("Commands:\n");
+      broadcast("  RUN [duration]\n");
+      broadcast("  READ [filename]\n");
+      broadcast("  LIST\n");
+      broadcast("  RESET\n");
+      broadcast("  STATUS\n");
+      broadcast("  HELP\n");
     }
 
     // COMMAND NOT RECOGNIZED
@@ -256,6 +259,33 @@ int broadcast(String msg)
   }
 }
 
+String getCommand()
+{
+  // Read In New Command From Stream(s)
+  if(SERIAL_ENABLED)
+  {
+    if(Serial.available())
+    {
+      return Serial.readString();
+    }
+  }
+  else if(BLUETOOTH_ENABLED)
+  {
+    if(ble.isConnected())
+    {
+      if(ble.available())
+      {
+        ble.readline();
+        if(strcmp(ble.buffer, "OK") != 0)
+        {
+          return String(ble.buffer);
+        }
+      }
+    }
+  }
+  return String("NONE");
+}
+
 int echoCommand(String command, String argument)
 {
   broadcast(command);
@@ -272,43 +302,54 @@ int echoCommand(String command, String argument)
 
 int initModules()
 {
+  // Set Onboard LED Pin to Output
   pinMode(LED_PIN, OUTPUT);
 
+  // Attempt to Init Serial Module
   if(initSerial())
   {
     SERIAL_ENABLED = false;
   }
 
+  // Attempt to Init Bluetooth Module
   if(initBluetooth())
   {
     BLUETOOTH_ENABLED = false;
   }
 
+  // Critical Error if Both Streams are Down
   if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
   {
     toggleLED();
   }
+
+  // If Serial is Down, Use Bluetooth
   else if(!SERIAL_ENABLED)
   {
     broadcast("ERROR: Unable to init Serial.\n");
   }
+
+  // If Bluetooth is down, Use Serial
   else if(!BLUETOOTH_ENABLED)
   {
     broadcast("ERROR: Unable to init Bluetooth.\n");
   }
 
+  // Attempt to Init Datalogger
   if(initDatalogger())
   {
     DATALOGGER_ENABLED = false;
     broadcast("ERROR: Unable to init Datalogger.\n");
   }
 
+  // Attempt to Init INA260 (Critical Component)
   if(initINA260())
   {
     broadcast("ERROR: Unable to init INA260.\n");
     toggleLED();
   }
 
+  // Attempt to Init RTC
   if(initRTC())
   {
     RTC_ENABLED = false;
@@ -361,7 +402,14 @@ String getTimestamp()
 
 int recordData(long duration)
 {
-  // Log File
+  // Check INA260
+  if(!INA260_ENABLED)
+  {
+    broadcast("ERROR: Unable to find INA260.\n");
+    return -1;
+  }
+
+  // Create Log File
   File log;
 
   if(DATALOGGER_ENABLED)
@@ -396,6 +444,11 @@ int recordData(long duration)
       return -1;
     }
   }
+  else // Without Dataloger
+  {
+    broadcast("WARNING: Starting test without datalogger.\n");
+    broadcast("WARNING: Make sure to save data after running.\n");
+  }
 
   // Log Start Time
   String stamp = "START: ";
@@ -417,15 +470,15 @@ int recordData(long duration)
     }
   }
 
-  // Loop Variables
+  // Loop Time Variables
   long start = getTime();
   long last = start;
   long now = start;
 
-  // User Input Variable
-  String input = "NONE";
+  // Data Variables
+  float current, voltage, power;
 
-  // Polling Loop
+  // Polling Time Loop
   while(now - start < duration)
   {
     // Monitor Battery
@@ -436,43 +489,25 @@ int recordData(long duration)
         log.println("ERROR: Battery Low.\n");
       }
       broadcast("ERROR: Battery Low.\n");
+
+      // Break from Loop & Close File
       break;
     }
 
-    // Check for User Input
-    if(SERIAL_ENABLED)
+    //  Check for User Input
+    if(getCommand() == "STOP")
     {
-      if(Serial.available())
-      {
-        input = Serial.readString();
-      }
-    }
-    else if(BLUETOOTH_ENABLED)
-    {
-      if(ble.isConnected())
-      {
-        if(ble.available())
-        {
-          ble.readline();
-          if(strcmp(ble.buffer, "OK") != 0)
-          {
-            input = ble.buffer;
-          }
-        }
-      }
-    }
-    if(input == "STOP")
-    {
+      // Break from Loop & Close File
       break;
     }
 
-    // Check to Log Data
+    // Check Time to Log Data
     if(now - last > LOG_INTERVAL)
     {
       // Get Data
-      float current = ina260.readCurrent();
-      float voltage = ina260.readBusVoltage();
-      float power   = ina260.readPower();
+      current = ina260.readCurrent();
+      voltage = ina260.readBusVoltage();
+      power   = ina260.readPower();
 
       // Log Data
       if(DATALOGGER_ENABLED)
@@ -487,7 +522,7 @@ int recordData(long duration)
         log.print('\n');
       }
 
-      // Print Data
+      // Print Data to Serial
       if(SERIAL_ENABLED)
       {
         Serial.print(now);
@@ -499,6 +534,8 @@ int recordData(long duration)
         Serial.print(power);
         Serial.print('\n');
       }
+
+      // Print Data to Bluetooth
       if(BLUETOOTH_ENABLED)
       {
         if(ble.isConnected())
