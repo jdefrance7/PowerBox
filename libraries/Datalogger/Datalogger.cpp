@@ -1,4 +1,4 @@
-#include "datalogger.h"
+#include "Datalogger.h"
 
 // Datalogger Initialization
 int initDatalogger()
