@@ -15,7 +15,7 @@
 // Number of Seconds Between Data Logs
 #define LOG_INTERVAL 5
 
-// Function Definitions
+// Function Declarations
 int initModules();
 int toggleLED();
 int broadcast(String msg);
@@ -33,6 +33,7 @@ bool SERIAL_ENABLED = true;
 bool BLUETOOTH_ENABLED = true;
 bool DATALOGGER_ENABLED = true;
 bool RTC_ENABLED = true;
+bool INA260_ENABLED = true;
 
 void setup()
 {
@@ -97,6 +98,7 @@ int commandHandler()
         READ [FILENAME] - prints file to stream(s) available
         LIST - prints list of files on SD to stream(s) available
         RESET - reinitializes all modules of the project
+        STATUS - prints status of modules to stream(s) available
         HELP - prints list of supported commands to stream(s) available
     */
 
@@ -190,7 +192,28 @@ int commandHandler()
       broadcast("  READ [filename]\n");
       broadcast("  LIST\n");
       broadcast("  RESET\n");
+      broadcast("  STATUS\n");
       broadcast("  HELP\n");
+    }
+
+    else if(cmd == "STATUS" && arg == "NONE")
+    {
+      // Echo Command
+      broadcast("OK: ");
+      echoCommand(cmd, arg);
+
+      // Broadcast Module Statuses
+      broadcast("SERIAL: ");
+      broadcast(String(SERIAL_ENABLED));
+      broadcast("\nBLUETOOTH: ");
+      broadcast(String(BLUETOOTH_ENABLED));
+      broadcast("\nDATALOGGER: ");
+      broadcast(String(DATALOGGER_ENABLED));
+      broadcast("\nRTC: ");
+      broadcast(String(RTC_ENABLED));
+      broadcast("\nINA260: ");
+      broadcast(String(INA260_ENABLED));
+      broadcast("\n");
     }
 
     // COMMAND NOT RECOGNIZED
