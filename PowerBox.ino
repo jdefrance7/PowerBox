@@ -22,9 +22,17 @@ int broadcast(String msg);
 int commandHandler();
 int splitCommand(String command, String argument);
 int echoCommand(String command, String argument);
+long getTime();
+String getTimestamp();
 int recordData(long duration);
 int printFile(String filename);
 int listFiles();
+
+// Module Statuses
+bool SERIAL_ENABLED = true;
+bool BLUETOOTH_ENABLED = true;
+bool DATALOGGER_ENABLED = true;
+bool RTC_ENABLED = true;
 
 void setup()
 {
@@ -55,21 +63,24 @@ int commandHandler()
   String arg = "NONE";
 
   // Read In New Command From Stream(s)
-  if(Serial)
+  if(SERIAL_ENABLED)
   {
     if(Serial.available())
     {
       cmd = Serial.readString();
     }
   }
-  else if(ble.isConnected())
+  else if(BLUETOOTH_ENABLED)
   {
-    if(ble.available())
+    if(ble.isConnected())
     {
-      ble.readline();
-      if(strcmp(ble.buffer, "OK") != 0)
+      if(ble.available())
       {
-        cmd = ble.buffer;
+        ble.readline();
+        if(strcmp(ble.buffer, "OK") != 0)
+        {
+          cmd = ble.buffer;
+        }
       }
     }
   }
@@ -162,6 +173,7 @@ int commandHandler()
       broadcast("OK: ");
       echoCommand(cmd, arg);
 
+      // Reset Modules
       initModules();
     }
 
@@ -208,13 +220,16 @@ int toggleLED()
 
 int broadcast(String msg)
 {
-  if(Serial)
+  if(SERIAL_ENABLED)
   {
     Serial.print(msg);
   }
-  if(ble.isConnected())
+  if(BLUETOOTH_ENABLED)
   {
-    ble.print(msg);
+    if(ble.isConnected())
+    {
+      ble.print(msg);
+    }
   }
 }
 
@@ -238,19 +253,31 @@ int initModules()
 
   if(initSerial())
   {
-    toggleLED();
+    SERIAL_ENABLED = false;
   }
 
   if(initBluetooth())
   {
-    broadcast("ERROR: Unable to init Bluetooth.\n");
+    BLUETOOTH_ENABLED = false;
+  }
+
+  if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
+  {
     toggleLED();
+  }
+  else if(!SERIAL_ENABLED)
+  {
+    broadcast("ERROR: Unable to init Serial.\n");
+  }
+  else if(!BLUETOOTH_ENABLED)
+  {
+    broadcast("ERROR: Unable to init Bluetooth.\n");
   }
 
   if(initDatalogger())
   {
+    DATALOGGER_ENABLED = false;
     broadcast("ERROR: Unable to init Datalogger.\n");
-    toggleLED();
   }
 
   if(initINA260())
@@ -261,8 +288,8 @@ int initModules()
 
   if(initRTC())
   {
+    RTC_ENABLED = false;
     broadcast("ERROR: Unable to init RTC.\n");
-    toggleLED();
   }
 
   // Return Success
@@ -289,74 +316,126 @@ int splitCommand(String command, String argument)
   return 0;
 }
 
+long getTime()
+{
+  if(RTC_ENABLED)
+  {
+    return ((rtc.now()).unixtime());
+  }
+  return (millis()/1000);
+}
+
+String getTimestamp()
+{
+  if(RTC_ENABLED)
+  {
+    return rtc.now().timestamp(DateTime::TIMESTAMP_FULL);
+  }
+  String seconds = String(millis()/1000);
+  seconds.concat("s");
+  return seconds;
+}
+
 int recordData(long duration)
 {
-  // Datalogger Variables
+  // Log File
   File log;
-  String filename;
-  char charName[16];
 
-  // Find Next Available Filename
-  for(int n = 0; n < 1000; n++)
+  if(DATALOGGER_ENABLED)
   {
-    filename = "/log";
-    filename.concat(n);
-    filename.concat(".csv");
+    // Filename Variables
+    String filename;
+    char charName[16];
 
-    // Convert String to Char Array
-    filename.toCharArray(charName, 16);
-
-    if(!SD.exists(charName));
+    // Find Next Available Filename
+    for(int n = 0; n < 1000; n++)
     {
-      break;
+      filename = "/log";
+      filename.concat(n);
+      filename.concat(".csv");
+
+      // Convert String to Char Array
+      filename.toCharArray(charName, 16);
+
+      if(!SD.exists(charName));
+      {
+        break;
+      }
+    }
+
+    // Open File
+    if(openFile(log, charName, FILE_WRITE))
+    {
+      // Return Error
+      broadcast("ERROR: Unable to open file '");
+      broadcast(filename);
+      broadcast("'\n");
+      return -1;
     }
   }
 
-  // Open File
-  if(openFile(log, charName, FILE_WRITE))
+  // Log Start Time
+  String stamp = "START: ";
+  stamp.concat(getTimestamp());
+
+  if(DATALOGGER_ENABLED)
   {
-    // Return Error
-    broadcast("ERROR: Unable to open file '");
-    broadcast(filename);
-    broadcast("'\n");
-    return -1;
+    log.print(stamp);
+  }
+  if(SERIAL_ENABLED)
+  {
+    Serial.print(stamp);
+  }
+  if(BLUETOOTH_ENABLED)
+  {
+    if(ble.isConnected())
+    {
+      ble.println(stamp);
+    }
   }
 
-  // Log Start Time
-  DateTime start = rtc.now();
-  log.println(start.timestamp(DateTime::TIMESTAMP_FULL));
-
-  // Loop Time variables
-  DateTime last = start;
-  DateTime now = start;
+  // Loop Variables
+  long start = getTime();
+  long last = start;
+  long now = start;
 
   // User Input Variable
-  String input;
+  String input = "NONE";
 
   // Polling Loop
-  while(now.unixtime() - start.unixtime() < duration)
+  while(now - start < duration)
   {
     // Monitor Battery
     if(getBatteryVoltage() < VBATLOW);
     {
-      log.println("ERROR: Battery Low");
-      broadcast("ERROR: Battery Low");
+      if(DATALOGGER_ENABLED)
+      {
+        log.println("ERROR: Battery Low.\n");
+      }
+      broadcast("ERROR: Battery Low.\n");
       break;
     }
 
     // Check for User Input
-    if(Serial)
+    if(SERIAL_ENABLED)
     {
       if(Serial.available())
       {
         input = Serial.readString();
       }
     }
-    if(ble.isConnected())
+    else if(BLUETOOTH_ENABLED)
     {
-      if(ble.available())
+      if(ble.isConnected())
       {
-        input = ble.readline();
+        if(ble.available())
+        {
+          ble.readline();
+          if(strcmp(ble.buffer, "OK") != 0)
+          {
+            input = ble.buffer;
+          }
+        }
       }
     }
     if(input == "STOP")
@@ -365,7 +444,7 @@ int recordData(long duration)
     }
 
     // Check to Log Data
-    if(now.unixtime() - last.unixtime() > LOG_INTERVAL)
+    if(now - last > LOG_INTERVAL)
     {
       // Get Data
       float current = ina260.readCurrent();
@@ -373,19 +452,22 @@ int recordData(long duration)
       float power   = ina260.readPower();
 
       // Log Data
-      log.print(now.unixtime());
-      log.print(',');
-      log.print(current);
-      log.print(',');
-      log.print(voltage);
-      log.print(',');
-      log.print(power);
-      log.print('\n');
+      if(DATALOGGER_ENABLED)
+      {
+        log.print(now);
+        log.print(',');
+        log.print(current);
+        log.print(',');
+        log.print(voltage);
+        log.print(',');
+        log.print(power);
+        log.print('\n');
+      }
 
       // Print Data
-      if(Serial)
+      if(SERIAL_ENABLED)
       {
-        Serial.print(now.unixtime());
+        Serial.print(now);
         Serial.print(',');
         Serial.print(current);
         Serial.print(',');
@@ -394,28 +476,46 @@ int recordData(long duration)
         Serial.print(power);
         Serial.print('\n');
       }
-      if(ble.isConnected())
+      if(BLUETOOTH_ENABLED)
       {
-        ble.print(now.unixtime());
-        ble.print(',');
-        ble.print(current);
-        ble.print(',');
-        ble.print(voltage);
-        ble.print(',');
-        ble.print(power);
-        ble.print('\n');
+        if(ble.isConnected())
+        {
+          ble.print(now);
+          ble.print(',');
+          ble.print(current);
+          ble.print(',');
+          ble.print(voltage);
+          ble.print(',');
+          ble.print(power);
+          ble.print('\n');
+        }
       }
 
       // Update Last Log Time
-      last = rtc.now();
+      last = getTime();
     }
     // Poll Current Time
-    now = rtc.now();
+    now = getTime();
   }
 
   // Log End Time
-  DateTime end = rtc.now();
-  log.println(end.timestamp(DateTime::TIMESTAMP_FULL));
+  stamp = "END: ";
+  stamp.concat(getTimestamp());
+  if(DATALOGGER_ENABLED)
+  {
+    log.println(stamp);
+  }
+  if(SERIAL_ENABLED)
+  {
+    Serial.println(stamp);
+  }
+  if(BLUETOOTH_ENABLED)
+  {
+    if(ble.isConnected())
+    {
+      ble.println(stamp);
+    }
+  }
 
   // Close File
   closeFile(log);
@@ -426,6 +526,13 @@ int recordData(long duration)
 
 int printFile(String filename)
 {
+  // Check Datalogger
+  if(!DATALOGGER_ENABLED)
+  {
+    broadcast("ERROR: Datalogger not available.\n");
+    return -1;
+  }
+
   // Line Variables
   char character;
   String line = "";
@@ -454,13 +561,16 @@ int printFile(String filename)
     if(character == '\n')
     {
       // Print Line
-      if(Serial)
+      if(SERIAL_ENABLED)
       {
         Serial.println(line);
       }
-      if(ble.isConnected())
+      if(BLUETOOTH_ENABLED)
       {
-        ble.println(line);
+        if(ble.isConnected())
+        {
+          ble.println(line);
+        }
       }
 
       // Clear Line
@@ -479,9 +589,15 @@ int printFile(String filename)
 
 int listFiles()
 {
-  // Base Directory
-  File root = SD.open("/");
+  // Check Datalogger
+  if(!DATALOGGER_ENABLED)
+  {
+    broadcast("ERROR: Datalogger unavailable.\n");
+    return -1;
+  }
 
+  // Open Base Directory
+  File root = SD.open("/");
   if(!root)
   {
     // Return Error
@@ -496,21 +612,27 @@ int listFiles()
     entry = root.openNextFile();
     if(!entry)
     {
+      // Reached End of Root
       break;
     }
     else if(entry.isDirectory())
     {
+      // Skip Folders
       continue;
     }
     else
     {
-      if(Serial)
+      // Print Filename
+      if(SERIAL_ENABLED)
       {
         Serial.println(entry.name());
       }
-      if(ble.isConnected())
+      if(BLUETOOTH_ENABLED)
       {
-        ble.println(entry.name());
+        if(ble.isConnected())
+        {
+          ble.println(entry.name());
+        }
       }
     }
   }
