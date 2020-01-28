@@ -1,4 +1,4 @@
-#include "rtc.h"
+#include "RTC.h"
 
 // RTC_PCF8523 Object
 RTC_PCF8523 rtc;
