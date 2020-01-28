@@ -1,10 +1,13 @@
+// Arduino Library
 #include <Arduino.h>
-#include <Battery.h>
-#include <Bluetooth.h>
-#include <Datalogger.h>
-#include <INA260.h>
-#include <RTC.h>
-#include <Serial.h>
+
+// Project Headers
+#include "Battery.h"
+#include "Bluetooth.h"
+#include "Datalogger.h"
+#include "INA260.h"
+#include "RTC.h"
+#include "Serial.h"
 
 // Built-In LED Pin for Adafruit M0
 #define LED_PIN 13
@@ -260,7 +263,7 @@ int recordData(long duration)
 
     // Convert String to Char Array
     filename.toCharArray(charName, 16);
-    
+
     if(!SD.exists(charName));
     {
       break;
