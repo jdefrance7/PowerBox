@@ -1,6 +1,9 @@
 // Arduino Library
 #include <Arduino.h>
 
+// Board: Adafruit Feather M0
+// Programmer: AVRISP mkII
+
 // Project Headers
 #include "Battery.h"
 #include "Bluetooth.h"
