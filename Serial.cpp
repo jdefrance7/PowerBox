@@ -4,12 +4,16 @@
 int initSerial()
 {
   // Begins serial module
-  Serial.begin(BAUDRATE);
+  Serial.begin(115200);
 
   // Checks for success
-  if(!Serial)
+  long timeout = millis();
+  while(!Serial)
   {
-    return -1;
+    if(millis()-timeout > 10000)
+    {
+      return -1;
+    }
   }
   return 0;
 }

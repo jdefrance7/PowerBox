@@ -4,6 +4,12 @@
 // Board: Adafruit Feather M0
 // Programmer: AVRISP mkII
 
+// Build Option: Debug Information
+#define DEBUG
+
+// Build Option: OLED Display
+#define OLED
+
 // Project Headers
 #include "Battery.h"
 #include "Bluetooth.h"
@@ -12,8 +18,9 @@
 #include "RTC.h"
 #include "Serial.h"
 
-// Debug Flag
-#define DEBUG
+#ifdef OLED
+#include "OLED.h"
+#endif
 
 // Built-In LED Pin for Adafruit M0
 #define LED_PIN 13
@@ -41,6 +48,7 @@ bool BLUETOOTH_ENABLED = true;
 bool DATALOGGER_ENABLED = true;
 bool RTC_ENABLED = true;
 bool INA260_ENABLED = true;
+bool OLED_ENABLED = true;
 
 void setup()
 {
@@ -49,6 +57,15 @@ void setup()
 
   // Opening Message
   broadcast("Initialization Complete!\n");
+
+  #ifdef OLED
+  delay(5000);
+  oled.clearDisplay();
+  oled.println("Initialization");
+  oled.println("Complete!");
+  oled.display();
+  delay(2000);
+  #endif
 }
 
 void loop()
@@ -59,30 +76,67 @@ void loop()
 
 int commandHandler()
 {
-  // Monitor Battery
-  if(getBatteryVoltage() < VBATLOW);
-  {
-    broadcast("ERROR: Battery Low.\n");
-    toggleLED();
-  }
+  
+//  // Monitor Battery
+//  float battery = getBatteryVoltage();
+//  if(battery < VBATLOW);
+//  {
+//    broadcast("ERROR: Battery Low.\n");
+//
+//    #ifdef OLED
+//    oled.clearDisplay();
+//    oled.print("ERROR: Battery Low");
+//    oled.display();
+//    delay(2000);
+//    #endif
+//    
+//    toggleLED();
+//  }
 
   // Poll Stream(s) for Command
   String cmd = getCommand();
 
-  #ifdef DEBUG
-  broadcast("CMD: ");
-  broadcast(cmd);
-  broadcast("\n");
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("CMD: ");
+  oled.print(cmd);
+  oled.display();
+  delay(3000);
   #endif
 
   // Check if Command was Read
   if(cmd != "NONE")
   {
+    #ifdef DEBUG
+    broadcast("RAW: ");
+    broadcast(cmd);
+    broadcast("\n");
+    #endif
+
     // String for Arg
     String arg = "NONE";
 
     // Split Cmd & Arg
     splitCommand(cmd, arg);
+
+    #ifdef DEBUG
+    broadcast("CMD: ");
+    broadcast(cmd);
+    broadcast("\n");
+    broadcast("ARG: ");
+    broadcast(arg);
+    broadcast("\n");
+    #endif
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.print("CMD: ");
+    oled.println(cmd);
+    oled.print("ARG: ");
+    oled.println(arg);
+    oled.print("RSP: ");
+    oled.display();
+    #endif
 
     /*
       Supported Commands:
@@ -112,7 +166,14 @@ int commandHandler()
         // Echo Command
         broadcast("OK: ");
         echoCommand(cmd, arg);
-        broadcast("NOTE: Enter 'STOP' to quit logging data early.\n");
+        broadcast("INFO: Enter 'STOP' to quit logging data early.\n");
+
+        #ifdef OLED
+        oled.println("OK");
+        oled.print("MSG: ");
+        oled.println("Enter 'STOP' to quit early.");
+        oled.display();
+        #endif
 
         // Check Return Value
         if(recordData(duration))
@@ -125,6 +186,13 @@ int commandHandler()
         // Invalid Duration
         broadcast("ERROR: ");
         echoCommand(cmd, arg);
+
+        #ifdef OLED
+        oled.println("ERROR");
+        oled.print("MSG: ");
+        oled.println("Invalid duration.");
+        oled.display();
+        #endif
       }
     }
 
@@ -145,6 +213,13 @@ int commandHandler()
         broadcast("OK: ");
         echoCommand(cmd, arg);
 
+        #ifdef OLED
+        oled.println("OK");
+        oled.print("MSG: ");
+        oled.println("NONE");
+        oled.display();
+        #endif
+
         // Check Return Value
         if(printFile(arg))
         {
@@ -156,6 +231,13 @@ int commandHandler()
         // Invalid Filename
         broadcast("ERROR: ");
         echoCommand(cmd ,arg);
+
+        #ifdef OLED
+        oled.println("ERROR");
+        oled.print("MSG: ");
+        oled.println("Invalid filename.");
+        oled.display();
+        #endif
       }
     }
 
@@ -165,6 +247,13 @@ int commandHandler()
       // Echo Command
       broadcast("OK: ");
       echoCommand(cmd, arg);
+
+      #ifdef OLED
+      oled.println("OK");
+      oled.print("MSG: ");
+      oled.println("NONE");
+      oled.display();
+      #endif
 
       // Check Return Value
       if(listFiles())
@@ -180,6 +269,13 @@ int commandHandler()
       broadcast("OK: ");
       echoCommand(cmd, arg);
 
+      #ifdef OLED
+      oled.println("OK");
+      oled.print("MSG: ");
+      oled.println("NONE");
+      oled.display();
+      #endif
+
       // Reset Modules
       initModules();
     }
@@ -190,6 +286,13 @@ int commandHandler()
       // Echo Command
       broadcast("OK: ");
       echoCommand(cmd, arg);
+
+      #ifdef OLED
+      oled.println("OK");
+      oled.print("MSG: ");
+      oled.println("NONE");
+      oled.display();
+      #endif
 
       // Broadcast Module Statuses
       broadcast("SERIAL: ");
@@ -203,6 +306,22 @@ int commandHandler()
       broadcast("\nINA260: ");
       broadcast(String(INA260_ENABLED));
       broadcast("\n");
+
+      #ifdef OLED
+      oled.clearDisplay();
+      oled.print("SERIAL: ");
+      oled.println(String(SERIAL_ENABLED));
+      oled.print("BLUETOOTH: ");
+      oled.println(String(BLUETOOTH_ENABLED));
+      oled.print("DATALOGGER: ");
+      oled.println(String(DATALOGGER_ENABLED));
+      oled.print("RTC: ");
+      oled.print(String(RTC_ENABLED));
+      oled.print("   ");
+      oled.print("INA260: ");
+      oled.println(String(INA260_ENABLED));
+      oled.display();
+      #endif
     }
 
     // COMMAND: HELP
@@ -211,6 +330,13 @@ int commandHandler()
       // Echo Command
       broadcast("OK: ");
       echoCommand(cmd, arg);
+
+      #ifdef OLED
+      oled.println("OK");
+      oled.print("MSG: ");
+      oled.println("NONE");
+      oled.display();
+      #endif
 
       // List Supported Commands
       broadcast("Commands:\n");
@@ -228,7 +354,15 @@ int commandHandler()
       // Echo Command
       broadcast("ERROR: ");
       echoCommand(cmd, arg);
-      broadcast("NOTE: Enter 'HELP' for list of supported commands.\n");
+      broadcast("INFO: Enter 'HELP' for list of supported commands.\n");
+
+      #ifdef OLED
+      oled.println("ERROR");
+      oled.print("MSG: ");
+      oled.println("Invalid command.");
+      oled.display();
+      delay(1000);
+      #endif
     }
   }
 
@@ -238,6 +372,13 @@ int commandHandler()
 
 int toggleLED()
 {
+
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("FATAL ERROR");
+  oled.display();
+  #endif
+
   while(1)
   {
     digitalWrite(LED_PIN, HIGH);
@@ -272,7 +413,7 @@ String getCommand()
       return Serial.readString();
     }
   }
-  else if(BLUETOOTH_ENABLED)
+  if(BLUETOOTH_ENABLED)
   {
     if(ble.isConnected())
     {
@@ -308,17 +449,57 @@ int initModules()
   // Set Onboard LED Pin to Output
   pinMode(LED_PIN, OUTPUT);
 
+  // Attempt to Init OLED if Included
+  #ifdef OLED
+  if(initOLED())
+  {
+    OLED_ENABLED = false;
+  }
+  oled.clearDisplay();
+  oled.print("SERIAL: ");
+  oled.display();
+  #endif
+
   // Attempt to Init Serial Module
   if(initSerial())
   {
     SERIAL_ENABLED = false;
   }
 
+  #ifdef OLED
+  if(SERIAL_ENABLED)
+  {
+    oled.println("YES"); 
+  }
+  else
+  {
+    oled.println("NO");
+  }
+  oled.display();
+  #endif
+
+  #ifdef OLED
+  oled.print("BLUETOOTH: ");
+  oled.display();
+  #endif
+
   // Attempt to Init Bluetooth Module
   if(initBluetooth())
   {
     BLUETOOTH_ENABLED = false;
   }
+
+  #ifdef OLED
+  if(BLUETOOTH_ENABLED)
+  {
+    oled.println("YES");
+  }
+  else
+  {
+    oled.println("NO");
+  }
+  oled.display();
+  #endif
 
   // Critical Error if Both Streams are Down
   if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
@@ -338,6 +519,11 @@ int initModules()
     broadcast("ERROR: Unable to init Bluetooth.\n");
   }
 
+  #ifdef OLED
+  oled.print("DATALOGGER: ");
+  oled.display();
+  #endif
+
   // Attempt to Init Datalogger
   if(initDatalogger())
   {
@@ -345,12 +531,45 @@ int initModules()
     broadcast("ERROR: Unable to init Datalogger.\n");
   }
 
+  #ifdef OLED
+  if(DATALOGGER_ENABLED)
+  {
+    oled.println("YES");
+  }
+  else
+  {
+    oled.println("NO");
+  }
+  #endif
+
+  #ifdef OLED
+  oled.print("INA260: ");
+  oled.display();
+  #endif
+
   // Attempt to Init INA260 (Critical Component)
   if(initINA260())
   {
+    INA260_ENABLED = false;
     broadcast("ERROR: Unable to init INA260.\n");
-    toggleLED();
+    // toggleLED();
   }
+
+  #ifdef OLED
+  if(INA260_ENABLED)
+  {
+    oled.print("YES");
+  }
+  else
+  {
+    oled.print("NO");
+  }
+  #endif
+
+  #ifdef OLED
+  oled.print(" RTC: ");
+  oled.display();
+  #endif
 
   // Attempt to Init RTC
   if(initRTC())
@@ -358,6 +577,17 @@ int initModules()
     RTC_ENABLED = false;
     broadcast("ERROR: Unable to init RTC.\n");
   }
+
+  #ifdef OLED
+  if(RTC_ENABLED)
+  {
+    oled.println("YES");
+  }
+  else
+  {
+    oled.println("NO");
+  }
+  #endif
 
   // Return Success
   return 0;
@@ -409,6 +639,14 @@ int recordData(long duration)
   if(!INA260_ENABLED)
   {
     broadcast("ERROR: Unable to find INA260.\n");
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.print("ERROR: Unable to find INA260.\n");
+    oled.display();
+    delay(1000);
+    #endif
+
     return -1;
   }
 
@@ -444,6 +682,16 @@ int recordData(long duration)
       broadcast("ERROR: Unable to open file '");
       broadcast(filename);
       broadcast("'\n");
+
+      #ifdef OLED
+      oled.clearDisplay();
+      oled.println("ERROR: Unable to open file.");
+      oled.print("FILE: ");
+      oled.println(filename);
+      oled.display();
+      delay(1000);
+      #endif
+
       return -1;
     }
   }
@@ -451,6 +699,16 @@ int recordData(long duration)
   {
     broadcast("WARNING: Starting test without datalogger.\n");
     broadcast("WARNING: Make sure to save data after running.\n");
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.println("WARNING: Starting test.");
+    oled.println("without datalogger.");
+    oled.println("WARNING: Make sure to save");
+    oled.println("data after running.");
+    oled.display();
+    delay(1000);
+    #endif
   }
 
   // Log Start Time
@@ -473,13 +731,21 @@ int recordData(long duration)
     }
   }
 
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("START: ");
+  oled.println(stamp);
+  oled.display();
+  delay(1000);
+  #endif
+
   // Loop Time Variables
   long start = getTime();
   long last = start;
   long now = start;
 
   // Data Variables
-  float current, voltage, power;
+  float current, voltage, power, battery;
 
   // Polling Time Loop
   while(now - start < duration)
@@ -493,6 +759,13 @@ int recordData(long duration)
       }
       broadcast("ERROR: Battery Low.\n");
 
+      #ifdef OLED
+      oled.clearDisplay();
+      oled.print("ERROR: Battery Low");
+      oled.display();
+      delay(1000);
+      #endif
+
       // Break from Loop & Close File
       break;
     }
@@ -500,6 +773,15 @@ int recordData(long duration)
     //  Check for User Input
     if(getCommand() == "STOP")
     {
+      broadcast("INFO: 'STOP' command received.\n");
+
+      #ifdef OLED
+      oled.clearDisplay();
+      oled.print("STOP command received.");
+      oled.display();
+      delay(1000);
+      #endif
+
       // Break from Loop & Close File
       break;
     }
@@ -511,6 +793,8 @@ int recordData(long duration)
       current = ina260.readCurrent();
       voltage = ina260.readBusVoltage();
       power   = ina260.readPower();
+      battery = getBatteryVoltage();
+
 
       // Log Data
       if(DATALOGGER_ENABLED)
@@ -523,7 +807,7 @@ int recordData(long duration)
         log.print(',');
         log.print(power);
         log.print(',');
-        log.print(getBateryVoltage());
+        log.print(battery);
         log.print('\n');
       }
 
@@ -538,7 +822,7 @@ int recordData(long duration)
         Serial.print(',');
         Serial.print(power);
         Serial.print(',');
-        Serial.print(getBateryVoltage());
+        Serial.print(battery);
         Serial.print('\n');
       }
 
@@ -555,10 +839,27 @@ int recordData(long duration)
           ble.print(',');
           ble.print(power);
           ble.print(',');
-          ble.print(getBateryVoltage());
+          ble.print(battery);
           ble.print('\n');
         }
       }
+
+      #ifdef OLED
+      oled.clearDisplay();
+      oled.print("CURRENT: ");
+      oled.print(current);
+      oled.println(" mA");
+      oled.print("VOLTAGE: ");
+      oled.print(voltage);
+      oled.println(" V");
+      oled.print("POWER: ");
+      oled.print(power);
+      oled.println(" mW");
+      oled.print("BATTERY: ");
+      oled.print(battery);
+      oled.println(" V");
+      oled.display();
+      #endif
 
       // Update Last Log Time
       last = getTime();
@@ -586,6 +887,14 @@ int recordData(long duration)
     }
   }
 
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("END: ");
+  oled.print(stamp);
+  oled.display();
+  delay(1000);
+  #endif
+
   // Close File
   closeFile(log);
 
@@ -599,6 +908,14 @@ int printFile(String filename)
   if(!DATALOGGER_ENABLED)
   {
     broadcast("ERROR: Datalogger not available.\n");
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.print("ERROR: Dataloger not available.\n");
+    oled.display();
+    delay(1000);
+    #endif
+
     return -1;
   }
 
@@ -618,8 +935,24 @@ int printFile(String filename)
     broadcast("ERROR: Unable to open file '");
     broadcast(filename);
     broadcast("'\n");
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.println("ERROR: Unable to open file.");
+    oled.print("FILE: ");
+    oled.println(filename);
+    oled.display();
+    delay(1000);
+    #endif
+
     return -1;
   }
+
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("Reading file...");
+  oled.display();
+  #endif
 
   // Read File Line by Line
   while(logfile.available())
@@ -652,6 +985,12 @@ int printFile(String filename)
     }
   }
 
+  #ifdef OLED
+  oled.print("Read Complete!");
+  oled.display();
+  delay(1000);
+  #endif
+
   // Return Success
   return 0;
 }
@@ -662,6 +1001,14 @@ int listFiles()
   if(!DATALOGGER_ENABLED)
   {
     broadcast("ERROR: Datalogger unavailable.\n");
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.print("ERROR: Datalogger unavailable.\n");
+    oled.display();
+    delay(1000);
+    #endif
+
     return -1;
   }
 
@@ -671,8 +1018,22 @@ int listFiles()
   {
     // Return Error
     broadcast("ERROR: Unable to open root.");
+
+    #ifdef OLED
+    oled.clearDisplay();
+    oled.print("ERROR: Unable to open root.");
+    oled.display();
+    delay(1000);
+    #endif
+
     return -1;
   }
+
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("Listing files...");
+  oled.display();
+  #endif
 
   // Iterate Through Base Directory
   File entry;
@@ -708,6 +1069,13 @@ int listFiles()
 
   // Close Root
   root.close();
+
+  #ifdef OLED
+  oled.clearDisplay();
+  oled.print("List Complete!");
+  oled.display();
+  delay(1000);
+  #endif
 
   // Return Success
   return 0;
