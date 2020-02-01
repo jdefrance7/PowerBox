@@ -15,10 +15,4 @@
 // Datalogger Initializer
 int initDatalogger();
 
-// File Open Support
-int openFile(File file, char* name, byte mode);
-
-// File Close Support
-int closeFile(File file);
-
 #endif // DATALOGGER_H

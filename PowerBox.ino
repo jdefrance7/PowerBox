@@ -1,12 +1,8 @@
-// PROGRAM NOTES
-// Board: Adafruit Feather M0
-// Programmer: AVRISP mkII
-
-// Build Option: Debug Information
-#define DEBUG
-
-// Build Option: OLED Display
-//#define OLED
+/*
+  PROJECT NOTES
+    Board: Adafruit Feather M0
+    Programmer: AVRISP mkII
+*/
 
 // Arduino Library
 #include <Arduino.h>
@@ -19,41 +15,30 @@
 #include "RTC.h"
 #include "Serial.h"
 
-#ifdef OLED
-#include "OLED.h"
-#endif
-
 // Built-In LED Pin for Adafruit M0
 #define LED_PIN 13
 
 // Number of Seconds Between Data Logs
 #define LOG_INTERVAL 5
 
-// Function Declarations
+// Support Function Declarations
 int initModules();
 int toggleLED();
-
 int broadcast(String msg);
-
-int commandHandler();
-
 int getInt();
 long getLong();
-
-int getDuration(long &duration);
-int getFilenumber(int &filenumber);
-
-//int getFilename(char* &filename);
-
-int recordData(long duration);
 long getTime();
 String getTimestamp();
+int getDuration(long &duration);
+int getFilenumber(int &filenumber);
+int printFile(File logfile);
 
-int printFile(int filenumber);
-//int printFile(char* filename);
-
-int printStatus();
-
+// Main Function Declarations
+int inputHandler();
+int recordData(long duration);
+int readFile(int filenumber);
+int moduleStatus();
+int resetDevice();
 int printInfo();
 
 // Module Statuses
@@ -76,236 +61,7 @@ void setup()
 void loop()
 {
   // Continuously Read and Process Commands
-  commandHandler();
-}
-
-int toggleLED()
-{
-  while(1)
-  {
-    digitalWrite(LED_PIN, HIGH);
-    delay(300);
-    digitalWrite(LED_PIN, LOW);
-    delay(300);
-  }
-}
-
-int broadcast(String msg)
-{
-  if(SERIAL_ENABLED)
-  {
-    Serial.print(msg);
-  }
-  if(BLUETOOTH_ENABLED)
-  {
-    if(ble.isConnected())
-    {
-      ble.print(msg);
-      ble.waitForOK();
-    }
-  }
-}
-
-int getInt()
-{
-  // Check for Errors
-  if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
-  {
-    broadcast("ERROR: No streams available.\n");
-    return -1;
-  }
-
-  if(SERIAL_ENABLED)
-  {
-    if(Serial.available())
-    {
-      return int(Serial.parseInt());
-    }
-  }
-
-  if(BLUETOOTH_ENABLED)
-  {
-    if(ble.isConnected())
-    {
-      if(ble.available())
-      {
-        return int(ble.readline_parseInt());
-      }
-    }
-  }
-
-  return 0;
-}
-
-long getLong()
-{
-  // Check for Errors
-  if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
-  {
-    broadcast("ERROR: No streams available.\n");
-    return -1;
-  }
-
-  if(SERIAL_ENABLED)
-  {
-    if(Serial.available())
-    {
-      // Returns '-1' on failure.
-      return long(Serial.parseInt());
-    }
-  }
-
-  if(BLUETOOTH_ENABLED)
-  {
-    if(ble.isConnected())
-    {
-      if(ble.available())
-      {
-        // Returns '-1' on failure, '0' on no data.
-        return long(ble.readline_parseInt());
-      }
-    }
-  }
-
-  return 0;
-}
-
-int getDuration(long &duration)
-{
-  broadcast("\nINFO: Enter Duration in Seconds\n");
-
-  long value = 0;
-  while(value <= 0)
-  {
-    value = getLong();
-    if(value == -1)
-    {
-      broadcast("\nERROR: Invalid duration '-1'.\n");
-      broadcast("\nINFO: Enter Duration in Seconds: ");
-    }
-  }
-  duration = value;
-
-  broadcast("\nRECEIVED: "+String(duration)+"\n");
-
-  return 0;
-}
-
-int getFilenumber(int &filenumber)
-{
-    // Check for Errors
-  if(!DATALOGGER_ENABLED)
-  {
-    broadcast("\nERROR: Datalogger not available.\n");
-    return -1;
-  }
-
-  // Open Base Directory
-  File root = SD.open("/");
-  if(!root)
-  {
-    broadcast("\nERROR: Unable to open root.");
-    return -1;
-  }
-
-  // Start with First File
-  File entry;
-  int entryNumber = 1;
-
-  // Iterate through Root Directory
-  while(1)
-  {
-    entry = root.openNextFile();
-
-    // End of Root Directory
-    if(!entry)
-    {
-      break;
-    }
-
-    // Skip Other Directories
-    else if(entry.isDirectory())
-    {
-      continue;
-    }
-
-    // Print Valid File Name and Number
-    else
-    {
-      broadcast(String(entryNumber++)+". "+entry.name()+"\n");
-    }
-  }
-
-  // Ask User for Filenumber
-  broadcast("\nINFO: Enter Filenumber: ");
-
-  int number = 0;
-
-  while(1)
-  {
-    if(SERIAL_ENABLED)
-    {
-      if(Serial.available())
-      {
-        number = Serial.parseInt();
-      }
-    }
-    if(BLUETOOTH_ENABLED)
-    {
-      if(ble.isConnected())
-      {
-        if(ble.available())
-        {
-          number = ble.readline_parseInt();
-        }
-      }
-    }
-
-    // No Entry
-    if(number == 0)
-    {
-      continue;
-    }
-
-    // Entry out of Range
-    else if(number <= 0 || number >= entryNumber)
-    {
-      broadcast("ERROR: Invalid filenumber '"+String(number)+"'.\n");
-    }
-
-    // Entry in Range
-    else
-    {
-      break;
-    }
-  }
-
-  broadcast("\nFILENUMBER: "+String(number));
-
-  filenumber = number;
-
-  // Close Root
-  root.close();
-
-  return 0;
-}
-
-long getTime()
-{
-  if(RTC_ENABLED)
-  {
-    return ((rtc.now()).unixtime());
-  }
-  return (millis()/1000);
-}
-
-String getTimestamp()
-{
-  if(RTC_ENABLED)
-  {
-    return rtc.now().timestamp(DateTime::TIMESTAMP_FULL);
-  }
-  return String(millis()/1000)+"s";
+  inputHandler();
 }
 
 int initModules()
@@ -366,7 +122,7 @@ int initModules()
     DATALOGGER_ENABLED = true;
   }
 
-  // Attempt to Init INA260 (Critical Component)
+  // Attempt to Init INA260
   if(initINA260())
   {
     INA260_ENABLED = false;
@@ -394,7 +150,266 @@ int initModules()
   return 0;
 }
 
-int commandHandler()
+int toggleLED()
+{
+  while(1)
+  {
+    digitalWrite(LED_PIN, HIGH);
+    delay(300);
+    digitalWrite(LED_PIN, LOW);
+    delay(300);
+  }
+}
+
+int broadcast(String msg)
+{
+  if(SERIAL_ENABLED)
+  {
+    Serial.print(msg);
+  }
+  if(BLUETOOTH_ENABLED)
+  {
+    if(ble.isConnected())
+    {
+      ble.print(msg);
+      ble.waitForOK();
+    }
+  }
+}
+
+int getInt()
+{
+  // Check for Errors
+  if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
+  {
+    broadcast("ERROR: No streams available.\n");
+    return -1;
+  }
+
+  // Check For Serial Data
+  if(SERIAL_ENABLED)
+  {
+    if(Serial.available())
+    {
+      return int(Serial.parseInt());
+    }
+  }
+
+  // Check For Bluetooth Data
+  if(BLUETOOTH_ENABLED)
+  {
+    if(ble.isConnected())
+    {
+      if(ble.available())
+      {
+        return int(ble.readline_parseInt());
+      }
+    }
+  }
+
+  return 0;
+}
+
+long getLong()
+{
+  // Check for Errors
+  if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
+  {
+    broadcast("ERROR: No streams available.\n");
+    return -1;
+  }
+
+  // Check for Serial Data
+  if(SERIAL_ENABLED)
+  {
+    if(Serial.available())
+    {
+      return long(Serial.parseInt());
+    }
+  }
+
+  // Check for Bluetooth Data
+  if(BLUETOOTH_ENABLED)
+  {
+    if(ble.isConnected())
+    {
+      if(ble.available())
+      {
+        return long(ble.readline_parseInt());
+      }
+    }
+  }
+
+  return 0;
+}
+
+long getTime()
+{
+  if(RTC_ENABLED)
+  {
+    return ((rtc.now()).unixtime());
+  }
+  return (millis()/1000);
+}
+
+String getTimestamp()
+{
+  if(RTC_ENABLED)
+  {
+    return rtc.now().timestamp(DateTime::TIMESTAMP_FULL);
+  }
+  return String(millis()/1000)+"s";
+}
+
+int getDuration(long &duration)
+{
+  broadcast("\nINFO: Enter Duration in Seconds\n");
+
+  long value = 0;
+  while(value <= 0)
+  {
+    value = getLong();
+    if(value == -1)
+    {
+      broadcast("\nERROR: Invalid duration '-1'.\n");
+      broadcast("\nINFO: Enter Duration in Seconds\n");
+    }
+  }
+  duration = value;
+
+  broadcast("\nRECEIVED: "+String(duration)+"\n");
+
+  return 0;
+}
+
+int getFilenumber(int &filenumber)
+{
+  // Check for Errors
+  if(!DATALOGGER_ENABLED)
+  {
+    broadcast("\nERROR: Datalogger not available.\n");
+    return -1;
+  }
+
+  // Open Base Directory
+  File root = SD.open("/");
+  if(!root)
+  {
+    broadcast("\nERROR: Unable to open root.");
+    return -1;
+  }
+
+  // Start with First File
+  File entry;
+  int entryNumber = 1;
+
+  // Iterate through Root Directory, Printing Valid Filenames
+  while(1)
+  {
+    entry = root.openNextFile();
+
+    // End of Root Directory
+    if(!entry)
+    {
+      break;
+    }
+
+    // Skip Other Directories
+    else if(entry.isDirectory())
+    {
+      continue;
+    }
+
+    // Print Valid File Name and Number
+    else
+    {
+      broadcast(String(entryNumber++)+". "+entry.name()+"\n");
+    }
+  }
+
+  // Ask User for Filenumber
+  broadcast("\nINFO: Enter Filenumber: ");
+
+  // Get Filenumber from User
+  int number = 0;
+  while(number == 0)
+  {
+    number = getInt();
+
+    // No Entry
+    if(number == 0)
+    {
+      continue;
+    }
+
+    // Entry out of Range
+    else if(number <= 0 || number >= entryNumber)
+    {
+      broadcast("ERROR: Invalid filenumber '"+String(number)+"'.\n");
+    }
+
+    // Entry in Range
+    else
+    {
+      break;
+    }
+  }
+
+  broadcast("\nFILENUMBER: "+String(number));
+
+  filenumber = number;
+
+  // Close Root
+  root.close();
+
+  return 0;
+}
+
+int printFile(File logfile)
+{
+  // Check Datalogger
+  if(!DATALOGGER_ENABLED)
+  {
+    broadcast("\nERROR: Datalogger not available.\n");
+
+    return -1;
+  }
+  if(!logfile)
+  {
+    broadcast("\nERROR: File not open.\n");
+    return -1;
+  }
+
+  // Line Variables
+  char character;
+  String line = "";
+
+  // Read File Line by Line
+  while(logfile.available())
+  {
+    // Read Next Char
+    character = logfile.read();
+
+    if(character == '\n')
+    {
+      // Print Line
+      broadcast(line);
+
+      // Clear Line
+      line = "";
+    }
+    else
+    {
+      // Add Character to Line
+      line.concat(character);
+    }
+  }
+
+  // Return Success
+  return 0;
+}
+
+int inputHandler()
 {
   // User Input Variable
   static int input;
@@ -405,12 +420,14 @@ int commandHandler()
   broadcast(" 2. READ FILE \n");
   broadcast(" 3. MODULE STATUS \n");
   broadcast(" 4. RESET DEVICE \n");
-  broadcast(" 5. INFORMATION \n");
+  broadcast(" 5. PRINT INFO \n");
 
   while(1)
   {
+    // Get Input
     input = getInt();
 
+    // Received Input
     if(input != 0)
     {
       broadcast("\nRECEIVED: ");
@@ -430,15 +447,15 @@ int commandHandler()
       static long duration;
       if(getDuration(duration))
       {
-
+        broadcast("\nERROR: Invalid duration.\n");
       }
       else if(recordData(duration))
       {
-
+        broadcast("\nERROR: An error occured while recording data.\n");
       }
       else
       {
-
+        broadcast("\nINFO: Data recording complete!\n");
       }
       return 0;
     }
@@ -449,15 +466,15 @@ int commandHandler()
       static int filenumber;
       if(getFilenumber(filenumber))
       {
-        
+        broadcast("\nERROR: Invalid filenumber.\n");
       }
-      else if(printFile(filenumber))
+      else if(readFile(filenumber))
       {
-        
+        broadcast("\nERROR: An error occured while printing the file.\n");
       }
       else
       {
-
+        broadcast("\nINFO: File printing complete!\n");
       }
       return 0;
     }
@@ -465,13 +482,13 @@ int commandHandler()
     // Module Status
     else if(input == 3)
     {
-      if(printStatus())
+      if(moduleStatus())
       {
-
+        broadcast("\nERROR: An error occured while printing status.\n");
       }
       else
       {
-
+        broadcast("\nINFO: Status printing complete!\n");
       }
       return 0;
     }
@@ -479,13 +496,13 @@ int commandHandler()
     // Reset Device
     else if(input == 4)
     {
-      if(initModules())
+      if(resetDevice())
       {
-
+        broadcast("\nERROR: An error occured while resetting the device.\n");
       }
       else
       {
-
+        broadcast("\nINFO: Device reset complete!\n");
       }
       return 0;
     }
@@ -495,11 +512,11 @@ int commandHandler()
     {
       if(printInfo())
       {
-
+        broadcast("\nERROR: An error occured printing information.\n");
       }
       else
       {
-
+        broadcast("\nINFO: Information printing complete!\n");
       }
       return 0;
     }
@@ -555,14 +572,12 @@ int recordData(long duration)
     if(!log)
     {
       // Return Error
-      broadcast("\nERROR: Unable to open file '");
-      broadcast(charName);
-      broadcast("'\n");
+      broadcast("\nERROR: Unable to open file '"+filename+"'\n");
       return -1;
     }
     else
     {
-      broadcast("\nINFO: Logging data to '"+String(charName)+"'\n");
+      broadcast("\nINFO: Logging data to '"+filename+"'\n");
     }
   }
   else // Without Dataloger
@@ -582,17 +597,7 @@ int recordData(long duration)
   {
     log.println(stamp);
   }
-  if(SERIAL_ENABLED)
-  {
-    Serial.println(stamp);
-  }
-  if(BLUETOOTH_ENABLED)
-  {
-    if(ble.isConnected())
-    {
-      ble.println(stamp);
-    }
-  }
+  broadcast(stamp+"\n");
 
   // Loop Time Variables
   long start = getTime();
@@ -605,7 +610,7 @@ int recordData(long duration)
 
   if(DATALOGGER_ENABLED)
   {
-    log.println(csv);    
+    log.println(csv);
   }
   broadcast(csv+"\n");
 
@@ -615,9 +620,11 @@ int recordData(long duration)
     //  Check for User Input
     if(getInt() > 0)
     {
-      broadcast("INFO: 'STOP' command received.\n");
-
-      // Break from Loop & Close File
+      if(DATALOGGER_ENABLED)
+      {
+        log.println("INFO: Stop command received.");
+      }
+      broadcast("\nINFO: Stop command received.\n");
       break;
     }
 
@@ -630,62 +637,19 @@ int recordData(long duration)
       power   = ina260.readPower();
       battery = getBatteryVoltage();
 
-      csv = String(now)+","+String(current)+","+String(voltage)+","+String(power)+","+String(battery);
+      // Arrange in CSV Format
+      csv  = String(now)+",";
+      csv += String(current)+",";
+      csv += String(voltage)+",";
+      csv += String(power)+",";
+      csv += String(battery);
 
       // Log Data
       if(DATALOGGER_ENABLED)
       {
         log.println(csv);
-        // log.print(now);
-        // log.print(',');
-        // log.print(current);
-        // log.print(',');
-        // log.print(voltage);
-        // log.print(',');
-        // log.print(power);
-        // log.print(',');
-        // log.print(battery);
-        // log.print('\n');
       }
-
       broadcast(csv+"\n");
-      
-
-//      // Print Data to Serial
-//      if(SERIAL_ENABLED)
-//      {
-//        Serial.println(csv);
-//        // Serial.print(now);
-//        // Serial.print(',');
-//        // Serial.print(current);
-//        // Serial.print(',');
-//        // Serial.print(voltage);
-//        // Serial.print(',');
-//        // Serial.print(power);
-//        // Serial.print(',');
-//        // Serial.print(battery);
-//        // Serial.print('\n');
-//      }
-//
-//      // Print Data to Bluetooth
-//      if(BLUETOOTH_ENABLED)
-//      {
-//        if(ble.isConnected())
-//        {
-//          ble.println(csv);
-//          // ble.print(now);
-//          // ble.print(',');
-//          // ble.print(current);
-//          // ble.print(',');
-//          // ble.print(voltage);
-//          // ble.print(',');
-//          // ble.print(power);
-//          // ble.print(',');
-//          // ble.print(battery);
-//          // ble.print('\n');
-//          ble.waitForOK();
-//        }
-//      }
 
       // Update Last Log Time
       last = getTime();
@@ -701,26 +665,16 @@ int recordData(long duration)
   {
     log.println(stamp);
   }
-  if(SERIAL_ENABLED)
-  {
-    Serial.println(stamp);
-  }
-  if(BLUETOOTH_ENABLED)
-  {
-    if(ble.isConnected())
-    {
-      ble.println(stamp);
-    }
-  }
+  broadcast(stamp+"\n");
 
   // Close File
-  closeFile(log);
+  log.close();
 
   // Return Success
   return 0;
 }
 
-int printFile(int filenumber)
+int readFile(int filenumber)
 {
    // Check for Errors
   if(!DATALOGGER_ENABLED)
@@ -728,7 +682,7 @@ int printFile(int filenumber)
     broadcast("\nERROR: Datalogger not available.\n");
     return -1;
   }
-  
+
   File root = SD.open("/");
   if(!root)
   {
@@ -740,8 +694,10 @@ int printFile(int filenumber)
   File entry;
   int entryNumber = 1;
 
+  // Iterate Through Base Directory
   while(1)
   {
+    // Open Next File in Directory
     entry = root.openNextFile();
 
     // Reach End of Root Without Finding File
@@ -762,11 +718,10 @@ int printFile(int filenumber)
       // Desired File
       if(filenumber == entryNumber)
       {
-
         broadcast("\nFILENAME: "+String(entry.name())+"\n");
-        
+
         printFile(entry);
-        
+
         break;
       }
 
@@ -778,65 +733,13 @@ int printFile(int filenumber)
     }
   }
 
+  // Close Root
   root.close();
 
   return 0;
 }
 
-int printFile(File logfile)
-{
-  // Check Datalogger
-  if(!DATALOGGER_ENABLED)
-  {
-    broadcast("\nERROR: Datalogger not available.\n");
-
-    return -1;
-  }
-  if(!logfile)
-  {
-    broadcast("\nERROR: File not opened.\n");
-  }
-
-  // Line Variables
-  char character;
-  String line = "";
-
-  // Read File Line by Line
-  while(logfile.available())
-  {
-    // Read Next Char
-    character = logfile.read();
-
-    if(character == '\n')
-    {
-      // Print Line
-      if(SERIAL_ENABLED)
-      {
-        Serial.println(line);
-      }
-      if(BLUETOOTH_ENABLED)
-      {
-        if(ble.isConnected())
-        {
-          ble.println(line);
-        }
-      }
-
-      // Clear Line
-      line = "";
-    }
-    else
-    {
-      // Add Character to Line
-      line.concat(character);
-    }
-  }
-
-  // Return Success
-  return 0;
-}
-
-int printStatus()
+int moduleStatus()
 {
   broadcast("\nMODULE STATUS: \n");
 
@@ -853,6 +756,11 @@ int printStatus()
   broadcast("  BATTERY: "+String(getBatteryVoltage())+" V\n");
 
   return 0;
+}
+
+int resetDevice()
+{
+  return initModules();
 }
 
 int printInfo()
