@@ -16,7 +16,7 @@
 #define BLUEFRUIT_SPI_CS            A5
 #define BLUEFRUIT_SPI_IRQ           A4
 #define BLUEFRUIT_SPI_RST           -1
-#define FACTORYRESET_ENABLE         1 // {0:Run 1:Test}
+#define FACTORYRESET_ENABLE         0 // {0:Run 1:Test}
 #define MINIMUM_FIRMWARE_VERSION    "0.6.6"
 #define MODE_LED_BEHAVIOUR          "MODE"
 
