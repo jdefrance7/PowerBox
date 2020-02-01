@@ -345,7 +345,7 @@ int getFilenumber(int &filenumber)
     // Entry out of Range
     else if(number <= 0 || number >= entryNumber)
     {
-      broadcast("ERROR: Invalid filenumber '"+String(number)+"'.\n");
+      broadcast("\nERROR: Invalid filenumber '"+String(number)+"'.\n");
     }
 
     // Entry in Range
@@ -355,7 +355,7 @@ int getFilenumber(int &filenumber)
     }
   }
 
-  broadcast("\nFILENUMBER: "+String(number));
+  broadcast("\nFILENUMBER: "+String(number)+"\n");
 
   filenumber = number;
 
@@ -390,6 +390,10 @@ int printFile(File logfile)
     // Read Next Char
     character = logfile.read();
 
+    // Add Character to Line
+    line.concat(character);
+
+    // Print Line by Line
     if(character == '\n')
     {
       // Print Line
@@ -397,11 +401,6 @@ int printFile(File logfile)
 
       // Clear Line
       line = "";
-    }
-    else
-    {
-      // Add Character to Line
-      line.concat(character);
     }
   }
 
