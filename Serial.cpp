@@ -4,7 +4,7 @@
 int initSerial()
 {
   // Begins serial module
-  Serial.begin(115200);
+  Serial.begin(BAUDRATE);
 
   // Checks for success
   long timeout = millis();
