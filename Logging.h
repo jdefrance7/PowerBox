@@ -9,6 +9,7 @@
 #include "battery.h"
 #include "datalogger.h"
 #include "rtc.h"
+#include "ina260.h"
 #include "streams.h"
 
 // Number of Seconds Between Log Entries
