@@ -6,11 +6,11 @@
 */
 
 // Project Libraries
-#include "Datalogger.h"
-#include "Streams.h"
+#include "datalogger.h"
+#include "streams.h"
 
 // Uses Supporting Functions to Print User Specified File to Streams
-int readFile();
+int reading();
 
 // Prints Files in Root as Numbered List
 int printRoot();

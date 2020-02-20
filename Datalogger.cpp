@@ -1,4 +1,4 @@
-#include "Datalogger.h"
+#include "datalogger.h"
 
 // Status Flag
 bool DATALOGGER_ENABLED = false;
@@ -17,7 +17,7 @@ int initDatalogger()
   }
 
   // Attempt to open root directory
-  File root = root = SD.open("/");
+  File root = SD.open("/");
   if(!root)
   {
     DATALOGGER_ENABLED = false;

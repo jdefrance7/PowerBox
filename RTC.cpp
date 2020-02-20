@@ -1,4 +1,4 @@
-#include "RTC.h"
+#include "rtc.h"
 
 // Status Flag
 bool RTC_ENABLED = false;

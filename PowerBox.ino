@@ -9,16 +9,16 @@
 
 void setup()
 {
-  // Initialize Modules
+  // Initialize modules
   initModules();
 }
 
 void loop()
 {
-  // User Input Variable
-  static int input;
+  // User input variable
+  static int input = 0;
 
-  // Print Main Menu Options
+  // Print main menu options
   broadcast("\nMAIN MENU: \n");
   broadcast(" 1. RECORD DATA \n");
   broadcast(" 2. READ FILE \n");
@@ -26,65 +26,48 @@ void loop()
   broadcast(" 4. RESET DEVICE \n");
   broadcast(" 5. PRINT INFO \n");
 
-  while(1)
+  // Get user input
+  while(input == 0)
   {
-    // Get Input
     input = getInt();
+  }
 
-    // Received Input
-    if(input != 0)
-    {
-      broadcast("\nRECEIVED: ");
-      broadcast(String(input));
-      broadcast("\n");
-    }
+  // Print received input
+  broadcast("\nINFO: Received input '"+String(input)+"'.\n");
 
-    // No Input
-    if(input == 0)
-    {
-      continue;
-    }
+  // Logging
+  if(input == 1)
+  {
+    logging();
+  }
 
-    // Record Data
-    else if(input == 1)
-    {
-      logData();
-      break;
-    }
+  // Reading
+  else if(input == 2)
+  {
+    reading();
+  }
 
-    // Read File
-    else if(input == 2)
-    {
-      readFile();
-      break;
-    }
+  // Module Status
+  else if(input == 3)
+  {
+    moduleStatus();
+  }
 
-    // Module Status
-    else if(input == 3)
-    {
-      moduleStatus();
-      break;
-    }
+  // Reset Device
+  else if(input == 4)
+  {
+    resetDevice();
+  }
 
-    // Reset Device
-    else if(input == 4)
-    {
-      resetDevice();
-      break;
-    }
+  // Information
+  else if(input == 5)
+  {
+    printInfo();
+  }
 
-    // Information
-    else if(input == 5)
-    {
-      printInfo();
-      break;
-    }
-
-    // Invalid Entry
-    else
-    {
-      broadcast("\nERROR: Invalid entry '"+String(input)+"'.\n");
-      break;
-    }
+  // Invalid Entry
+  else
+  {
+    broadcast("\nERROR: Invalid entry '"+String(input)+"'.\n");
   }
 }

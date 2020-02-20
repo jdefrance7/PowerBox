@@ -1,4 +1,4 @@
-#include "INA260.h"
+#include "ina260.h"
 
 bool INA260_ENABLED = false;
 

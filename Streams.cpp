@@ -1,11 +1,10 @@
-#include "Streams.h"
+#include "streams.h"
 
 int getInt()
 {
   // Check for Errors
   if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
   {
-    broadcast("ERROR: No streams available.\n");
     return -1;
   }
 
@@ -38,7 +37,6 @@ long getLong()
   // Check for Errors
   if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
   {
-    broadcast("ERROR: No streams available.\n");
     return -1;
   }
 

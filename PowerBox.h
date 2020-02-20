@@ -5,9 +5,9 @@
   Library to Support Basic Power Box Functionality
 */
 
-#include "BuiltinLED.h"
-#include "Logging.h"
-#include "Reading.h"
+#include "builtinLED.h"
+#include "logging.h"
+#include "reading.h"
 
 int initModules();
 int moduleStatus();
