@@ -1,7 +1,14 @@
 #ifndef INA260_H
 #define INA260_H
 
-// Proivdes Adafruit_INA260 object (ina260) and init function.
+/*
+  Library Wrapper for Adafruit INA260
+
+  Profides:
+    - Adafruit_INA260 Object (ina260)
+    - Initialization Function (initINA260())
+    - INA260 Status Flag (INA260_ENABLED)
+*/
 
 // Arduino Library
 #include <Arduino.h>
@@ -19,6 +26,9 @@
 
 // Current Conversion Time
 #define CURRENT_CONVERSION_TIME INA260_TIME_140_us
+
+// Status Flag
+extern bool INA260_ENABLED;
 
 // INA260 Object
 extern Adafruit_INA260 ina260;

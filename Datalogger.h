@@ -1,7 +1,13 @@
 #ifndef DATALOGGER_H
 #define DATALOGGER_H
 
-// Provides datalogger object (SD) and init function.
+/*
+  Library Wrapper for Arduino SD & Adafruit Datalogger
+
+  Provides:
+    - Initialization Function (initDatalogger())
+    - Datalogger Status Flag (DATALOGGER_ENABLED)
+*/
 
 // Arduino Library
 #include <Arduino.h>
@@ -11,6 +17,9 @@
 
 // Datalogger Chip Select Pin
 #define DATALOGGER_CS   4
+
+// Status Flag
+extern bool DATALOGGER_ENABLED;
 
 // Datalogger Initializer
 int initDatalogger();

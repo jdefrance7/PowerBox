@@ -1,7 +1,14 @@
 #ifndef BLUETOOTH_H
 #define BLUETOOTH_H
 
-// Provides Adafruit_BluefruitLE_SPI Object (ble) and supporting init function.
+/*
+  Library Wrapper for Adafruit_BluefruitLE_SPI Module
+
+  Provides:
+    - Adafruit_BluefruitLE_SPI Object (ble)
+    - Bluetooth Status Flag (BLUETOOTH_ENABLED)
+    - Initialization Function (initBluetooth())
+*/
 
 // Arduino Library
 #include <Arduino.h>
@@ -19,6 +26,9 @@
 #define FACTORYRESET_ENABLE         0 // {0:Run 1:Test}
 #define MINIMUM_FIRMWARE_VERSION    "0.6.6"
 #define MODE_LED_BEHAVIOUR          "MODE"
+
+// Status Flag
+extern bool BLUETOOTH_ENABLED;
 
 // BlueFruitSPI Friend Object
 extern Adafruit_BluefruitLE_SPI ble;

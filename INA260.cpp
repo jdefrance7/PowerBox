@@ -1,5 +1,7 @@
 #include "INA260.h"
 
+bool INA260_ENABLED = false;
+
 // Adafruit_INA260 Object
 Adafruit_INA260 ina260 = Adafruit_INA260();
 
@@ -9,6 +11,7 @@ int initINA260()
   // Attempt communication with INA260
   if(!ina260.begin())
   {
+    INA260_ENABLED = false;
     return -1;
   }
 
@@ -16,10 +19,11 @@ int initINA260()
   ina260.setAveragingCount(AVERAGING_COUNT);
 
   // Set voltage conversion time
-  ina260.setVoltageConversionTime(INA260_TIME_140_us);
+  ina260.setVoltageConversionTime(VOLTAGE_CONVERSION_TIME);
 
   // Set current conversion time
-  ina260.setCurrentConversionTime(INA260_TIME_140_us);
+  ina260.setCurrentConversionTime(CURRENT_CONVERSION_TIME);
 
+  INA260_ENABLED = true;
   return 0;
 }
