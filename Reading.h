@@ -6,7 +6,6 @@
 */
 
 // Project Libraries
-#include "datalogger.h"
 #include "streams.h"
 
 // Uses Supporting Functions to Print User Specified File to Streams

@@ -14,11 +14,11 @@ int initModules()
   // Critical Error if Both Streams are Down
   if(!SERIAL_ENABLED && !BLUETOOTH_ENABLED)
   {
-    errorLED();
+    led.error();
   }
   else
   {
-    broadcast("\nINFO: Initializing Modules...\n");
+    broadcast("\nINFO: Initializing Modules\n");
   }
 
   // If Serial is Down, Use Bluetooth
@@ -26,11 +26,19 @@ int initModules()
   {
     broadcast("WARNING: Unable to init Serial.\n");
   }
+  else
+  {
+    broadcast("INFO: Serial enabled...\n");
+  }
 
   // If Bluetooth is down, Use Serial
   if(!BLUETOOTH_ENABLED)
   {
     broadcast("WARNING: Unable to init Bluetooth.\n");
+  }
+  else
+  {
+    broadcast("INFO: Bluetooth enabled...\n");
   }
 
   // Attempt to Init Datalogger
@@ -38,17 +46,30 @@ int initModules()
   {
     broadcast("WARNING: Unable to init Datalogger.\n");
   }
+  else
+  {
+    broadcast("INFO: Datalogger enabled...\n");
+  }
 
   // Attempt to Init INA260
   if(initINA260())
   {
     broadcast("WARNING: Unable to init INA260.\n");
+    led.error();
+  }
+  else
+  {
+    broadcast("INFO: INA260 enabled...\n");
   }
 
   // Attempt to Init RTC
   if(initRTC())
   {
     broadcast("WARNING: Unable to init RTC.\n");
+  }
+  else
+  {
+    broadcast("INFO: RTC enabled...\n");
   }
 
   broadcast("INFO: Initialization Complete!\n");

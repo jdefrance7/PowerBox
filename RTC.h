@@ -25,8 +25,4 @@ extern RTC_PCF8523 rtc;
 // RTC initializer
 int initRTC();
 
-long getTime();
-
-String getTimestamp();
-
 #endif // RTC_H

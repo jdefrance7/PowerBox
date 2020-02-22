@@ -27,21 +27,3 @@ int initRTC()
   RTC_ENABLED = true;
   return 0;
 }
-
-long getTime()
-{
-  if(RTC_ENABLED)
-  {
-    return ((rtc.now()).unixtime());
-  }
-  return (millis()/1000);
-}
-
-String getTimestamp()
-{
-  if(RTC_ENABLED)
-  {
-    return rtc.now().timestamp(DateTime::TIMESTAMP_FULL);
-  }
-  return String(millis()/1000)+"s";
-}

@@ -1,5 +1,5 @@
-#ifndef BUILTINLED_H
-#define BUILTINLED_H
+#ifndef LED_H
+#define LED_H
 
 /*
   Library to interface with the builtin LED onboard.
@@ -16,10 +16,24 @@
 // Built-In LED Pin for Adafruit M0
 #define LED_PIN 13
 
-void initLED();
+#define ERROR_TOGGLE 300
 
-void toggleLED();
+class LED
+{
+public:
+  LED(int pin);
+  int init();
+  void on();
+  void off();
+  void toggle();
+  void error();
+private:
+  int _pin;
+  bool _state;
+};
 
-void errorLED();
+extern LED led;
 
-#endif // BUILTINLED_H
+int initLED();
+
+#endif // LED_H

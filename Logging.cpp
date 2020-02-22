@@ -81,18 +81,15 @@ int logging()
 
   // Log start timestamp
   line = "START: ";
-  line.concat(getTimestamp());
+  line.concat(timestamp());
   logline(log, line);
 
   // Print data labels
   line = "TIME,CURRENT,VOLTAGE,POWER,BATTERY";
   logline(log, line);
 
-  // Data variables
-  float current, voltage, power, battery;
-
   // Loop variables
-  long start = getTime();
+  long start = time();
   long last = start;
   long now = start;
 
@@ -102,39 +99,33 @@ int logging()
     //  Check for user input to end logging early
     if(getInt() != 0)
     {
-      logline("INFO: Stop command receivied.");
+      logline(log, "INFO: Stop command receivied.");
       break;
     }
 
     // Check elapsed time for log condition
     if(now - last > LOG_INTERVAL)
     {
-      // Get data
-      current = ina260.readCurrent();
-      voltage = ina260.readBusVoltage();
-      power   = ina260.readPower();
-      battery = getBatteryVoltage();
-
-      // Arrange in CSV format
-      line  = String(now)+",";
-      line += String(current)+",";
-      line += String(voltage)+",";
-      line += String(power)+",";
-      line += String(battery);
+      // Arrange data in CSV format
+      line  = String(time())+",";
+      line += String(ina260.readCurrent())+",";
+      line += String(ina260.readBusVoltage())+",";
+      line += String(ina260.readPower())+",";
+      line += String(getBatteryVoltage());
 
       // Log data
-      logline(line);
+      logline(log, line);
 
       // Update last log time
-      last = getTime();
+      last = time();
     }
     // Poll current time
-    now = getTime();
+    now = time();
   }
 
   // Log end timestamp
   line = "END: ";
-  line.concat(getTimestamp());
+  line.concat(timestamp());
   logline(log, line);
 
   // Close log file if possible

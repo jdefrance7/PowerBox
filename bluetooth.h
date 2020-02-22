@@ -1,5 +1,5 @@
-#ifndef BLE_H
-#define BLE_H
+#ifndef BLUETOOTH_H
+#define BLUETOOTH_H
 
 /*
   Library Wrapper for Adafruit_BluefruitLE_SPI Module
@@ -36,4 +36,4 @@ extern Adafruit_BluefruitLE_SPI ble;
 // Bluetooth Initializer
 int initBluetooth();
 
-#endif // BLE_H
+#endif // BLUETOOTH_H

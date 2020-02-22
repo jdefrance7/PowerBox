@@ -78,6 +78,7 @@ void broadcast(String msg)
       ble.waitForOK();
     }
   }
+  return;
 }
 
 void broadline(String msg)
@@ -94,4 +95,31 @@ void broadline(String msg)
       ble.waitForOK();
     }
   }
+  return;
+}
+
+void logcast(File log, String msg)
+{
+  if(DATALOGGER_ENABLED)
+  {
+    if(log)
+    {
+      log.print(msg);
+    }
+  }
+  broadcast(msg);
+  return;
+}
+
+void logline(File log, String msg)
+{
+  if(DATALOGGER_ENABLED)
+  {
+    if(log)
+    {
+      log.println(msg);
+    }
+  }
+  broadline(msg);
+  return;
 }
