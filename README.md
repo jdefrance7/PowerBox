@@ -1,5 +1,6 @@
-# PowerBox
-Code for an interface with power sensors for the Innovative Engineer's Wind Turbine.
+# Power Box
+
+A simple power meter project to measure the output of wind turbines under test up to rectified 36VDC at 15A. Data is logged to a local SD card as well as broadcasted to available Bluetooth and Serial streams.
 
 ## Authors
 
