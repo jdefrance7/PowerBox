@@ -32,7 +32,7 @@ This project was created using the [Arduino IDE](https://www.arduino.cc/en/main/
 
 ### Uploading
 
-1. Connect the Adafruit Feather M0 to a computer through a data transfer capable Micro USB cable.
+1. Connect the Adafruit Feather M0 board to a computer through a data transfer capable Micro USB cable.
 
 2. Select the proper port from the `Tools->Port` menu in the Arduino IDE toolbar.
 
