@@ -19,7 +19,7 @@ This project was created using the [Arduino IDE](https://www.arduino.cc/en/main/
 
 3. Use the Arduino IDE Boards Manager to add the Adafruit Feather M0 board to the Arduino IDE.
 
-   * Follow the steps in the [Adafruit Feather M0 Guide](https://learn.adafruit.com/adafruit-feather-m0-basic-proto/using-with-arduino-ide) section 'Install SAMD Support'.
+   * Follow the steps in the [Adafruit Feather M0 Guide](https://learn.adafruit.com/adafruit-feather-m0-basic-proto/using-with-arduino-ide) section `Install SAMD Support`.
 
 ### Compiling
 
