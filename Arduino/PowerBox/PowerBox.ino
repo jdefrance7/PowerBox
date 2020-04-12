@@ -140,30 +140,30 @@ STATE menu()
     {
       broadcast('\n');
       broadcast("Received: "); broadcast(String(input)); broadcast('\n');
-    }
 
-    // Logging
-    if(input == 1)
-    {
-      return STATE_LOGGING;
-    }
+      // Logging
+      if(input == 1)
+      {
+        return STATE_LOGGING;
+      }
 
-    // Reading
-    else if(input == 2)
-    {
-      return STATE_READING;
-    }
+      // Reading
+      else if(input == 2)
+      {
+        return STATE_READING;
+      }
 
-    // Status
-    else if(input == 3)
-    {
-      return STATE_STATUS;
-    }
+      // Status
+      else if(input == 3)
+      {
+        return STATE_STATUS;
+      }
 
-    // Reset
-    else if(input == 4)
-    {
-      return STATE_INIT;
+      // Reset
+      else if(input == 4)
+      {
+        return STATE_INIT;
+      }
     }
   }
 }
@@ -188,18 +188,18 @@ STATE logging()
     {
       broadcast('\n');
       broadcast("Received: "); broadcast(String(duration)); broadcast('\n');
-    }
 
-    // Exit case
-    if(duration < 0)
-    {
-      return STATE_MENU;
-    }
+      // Exit case
+      if(duration < 0)
+      {
+        return STATE_MENU;
+      }
 
-    // Valid duration
-    else if(duration > 0)
-    {
-      break;
+      // Valid duration
+      else if(duration > 0)
+      {
+        break;
+      }
     }
   }
 
@@ -220,26 +220,26 @@ STATE logging()
     {
       broadcast('\n');
       broadcast("Received: "); broadcast(String(duration)); broadcast('\n');
-    }
 
-    // Exit case
-    if(interval < 0)
-    {
-      return STATE_MENU;
-    }
+      // Exit case
+      if(interval < 0)
+      {
+        return STATE_MENU;
+      }
 
-    // Invalid iterval
-    else if(interval >= duration)
-    {
-      broadcast('\n');
-      broadcast("ERROR: interval must be less than duration.\n");
-      interval = 0;
-    }
+      // Invalid iterval
+      else if(interval >= duration)
+      {
+        broadcast('\n');
+        broadcast("ERROR: interval must be less than duration.\n");
+        interval = 0;
+      }
 
-    // Valid interval
-    else
-    {
-      break;
+      // Valid interval
+      else
+      {
+        break;
+      }
     }
   }
 
@@ -273,7 +273,7 @@ STATE logging()
   broadcast('\n');
 
   // User interrrupt variable
-  char user_input = '\0';
+  char user_interrupt = '\0';
 
   // Start time reference
   long start_time = millis();
@@ -313,11 +313,9 @@ STATE logging()
       last_log_time = millis();
     }
 
-    // Get user interrupt
-    user_input = getChar();
-
-    // Check user interrupt
-    if(user_input != '\0')
+    // Check for user interrupt
+    user_interrupt = getChar();
+    if(user_interrupt != '\0')
     {
       broadcast('\n');
       broadcast("User interrupt detected!\n");
@@ -404,27 +402,27 @@ STATE reading()
     {
       broadcast('\n');
       broadcast("Received: "); broadcast(String(file_number)); broadcast('\n');
-    }
 
-    // Exit case
-    if(file_number < 0)
-    {
-      root.close();
-      return STATE_MENU;
-    }
+      // Exit case
+      if(file_number < 0)
+      {
+        root.close();
+        return STATE_MENU;
+      }
 
-    // Invalid file number
-    else if(file_number > entry_number)
-    {
-      broadcast('\n');
-      broadcast("ERROR: file number must be within range of entries or negative exit value.\n")
-      file_number = 0;
-    }
+      // Invalid file number
+      else if(file_number > entry_number)
+      {
+        broadcast('\n');
+        broadcast("ERROR: file number must be within range of entries or negative exit value.\n")
+        file_number = 0;
+      }
 
-    // Valid file number
-    else
-    {
-      break;
+      // Valid file number
+      else
+      {
+        break;
+      }
     }
   }
 
