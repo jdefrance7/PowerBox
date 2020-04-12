@@ -5,6 +5,10 @@ Code for an interface with power sensors for the Innovative Engineer's Wind Turb
 
 Joe DeFrance
 
+## Getting Started
+
+This project was created using the [Arduino IDE](https://www.arduino.cc/en/main/software) for the [Adafruit Feather M0 Bluefruit LE](https://www.adafruit.com/product/2995) board.
+
 ### Installing
 
 1. Download the [Arduino IDE](https://www.arduino.cc/en/main/software).
