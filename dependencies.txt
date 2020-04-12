@@ -1,6 +1,0 @@
-Dependencies:
- - SD
- - RTClib
- - Adafruit_BusIO
- - Adafruit_INA260_Library
- - Adafruit_BluefruitLE_nRF51

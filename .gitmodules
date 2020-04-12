@@ -1,0 +1,12 @@
+[submodule "Arduino/libraries/Adafruit_BluefruitLE_nRF51"]
+	path = Arduino/libraries/Adafruit_BluefruitLE_nRF51
+	url = https://github.com/adafruit/Adafruit_BluefruitLE_nRF51.git
+[submodule "Arduino/libraries/Adafruit_BusIO"]
+	path = Arduino/libraries/Adafruit_BusIO
+	url = https://github.com/adafruit/Adafruit_BusIO.git
+[submodule "Arduino/libraries/RTClib"]
+	path = Arduino/libraries/RTClib
+	url = https://github.com/adafruit/RTClib.git
+[submodule "Arduino/libraries/Adafruit_INA260"]
+	path = Arduino/libraries/Adafruit_INA260
+	url = https://github.com/adafruit/Adafruit_INA260.git
