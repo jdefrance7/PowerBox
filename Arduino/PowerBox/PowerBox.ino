@@ -18,7 +18,14 @@ typedef int STATE
 #define STATE_LOGGING   2
 #define STATE_READING   3
 #define STATE_STATUS    4
-byte state = STATE_INIT;
+STATE state = STATE_INIT;
+
+// State function declarations
+STATE initialization();
+STATE menu();
+STATE logging();
+STATE reading();
+STATE status();
 
 // Global status variable
 #define BLUETOOTH_MASK    0b00000001
@@ -37,7 +44,7 @@ void setup()
 
 void loop()
 {
-  switch((uint8_t)state)
+  switch(state)
   {
     case STATE_INIT:
       state = initialization();
