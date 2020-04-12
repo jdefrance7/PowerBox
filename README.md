@@ -3,7 +3,7 @@ Code for an interface with power sensors for the Innovative Engineer's Wind Turb
 
 ## Authors
 
-Primary: Joe DeFrance
+Joe DeFrance
 
 ### Installing
 
