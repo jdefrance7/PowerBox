@@ -12,6 +12,9 @@
 // Datalogger Chip Select Pin
 #define DATALOGGER_CS   4
 
+// Dataloger Flag
+extern bool DATALOGGER_ENABLED;
+
 // Datalogger Initializer
 int initDatalogger();
 

@@ -23,6 +23,9 @@
 // INA260 Object
 extern Adafruit_INA260 ina260;
 
+// INA260 Flag
+extern bool INA260_ENABLED;
+
 // INA260 Initializer
 int initINA260();
 

@@ -1,5 +1,8 @@
 #include "Datalogger.h"
 
+// Dataloger Flag
+bool DATALOGGER_ENABLED = false;
+
 // Datalogger Initialization
 int initDatalogger()
 {
@@ -9,8 +12,12 @@ int initDatalogger()
   // Begin communication with datalogger
   if(!SD.begin(DATALOGGER_CS))
   {
+    DATALOGGER_ENABLED = false;
+
     return -1;
   }
+
+  DATALOGGER_ENABLED = false;
 
   return 0;
 }

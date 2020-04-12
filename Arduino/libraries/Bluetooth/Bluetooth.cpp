@@ -3,20 +3,27 @@
 // Bluetooth Object
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
+// Bluetooth Flag
+bool BLUETOOTH_ENABLED = false;
+
 // Bluetooth Initialization
 int initBluetooth()
 {
   // Attempts communication with bluetooth module
   if(!ble.begin(VERBOSE_MODE))
   {
+    BLUETOOTH_ENABLED = false;
+
     return -1;
   }
 
-  // Checks for factory reset (should be disabled)
+  // Checks for factory reset (should be disabled for production)
   if(FACTORYRESET_ENABLE)
   {
     if(!ble.factoryReset())
     {
+      BLUETOOTH_ENABLED = false;
+
       return -1;
     }
   }
@@ -35,6 +42,8 @@ int initBluetooth()
 
   // Sets bluetooth module to data mode
   ble.setMode(BLUEFRUIT_MODE_DATA);
+
+  BLUETOOTH_ENABLED = true;
 
   return 0;
 }

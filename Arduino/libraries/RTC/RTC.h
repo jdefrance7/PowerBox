@@ -12,7 +12,13 @@
 // RTC Object
 extern RTC_PCF8523 rtc;
 
+// RTC Flag
+extern bool RTC_ENABLED;
+
 // RTC initializer
 int initRTC();
+
+// Timestamp
+String timestamp();
 
 #endif // RTC_H
